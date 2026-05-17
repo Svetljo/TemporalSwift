@@ -168,3 +168,10 @@ All errors are `TemporalSwiftError` cases. Never `fatalError` or `preconditionFa
 - Format with `swift-format` using the `.swift-format` config at the repo root
 - Commit messages use conventional commits: `feat:`, `fix:`, `test:`, `docs:`, `refactor:`, `chore:`
 - All `public` and `package` symbols **must** have DocC documentation (at minimum a summary line)
+
+<!-- SPECKIT START -->
+## Active Feature Plan
+
+**Feature**: SwiftData Persistent Store
+**Plan**: `specs/001-swiftdata-persistent-store/plan.md`
+<!-- SPECKIT END -->

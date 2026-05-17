@@ -4,12 +4,16 @@ import PackageDescription
 let package = Package(
     name: "TemporalSwift",
     platforms: [
-        .macOS(.v14)
+        .macOS(.v14),
+        .iOS(.v17),
+        .tvOS(.v17),
+        .watchOS(.v10),
     ],
     products: [
         .library(name: "TemporalSwiftCore", targets: ["TemporalSwiftCore"]),
         .library(name: "TemporalSwiftStorage", targets: ["TemporalSwiftStorage"]),
         .library(name: "TemporalSwiftQuery", targets: ["TemporalSwiftQuery"]),
+        .library(name: "TemporalSwiftPersistence", targets: ["TemporalSwiftPersistence"]),
     ],
     targets: [
         .target(
@@ -33,6 +37,13 @@ let package = Package(
                 .swiftLanguageMode(.v6)
             ]
         ),
+        .target(
+            name: "TemporalSwiftPersistence",
+            dependencies: ["TemporalSwiftCore"],
+            swiftSettings: [
+                .swiftLanguageMode(.v6)
+            ]
+        ),
         .testTarget(
             name: "TemporalSwiftCoreTests",
             dependencies: ["TemporalSwiftCore"],
@@ -50,6 +61,13 @@ let package = Package(
         .testTarget(
             name: "TemporalSwiftQueryTests",
             dependencies: ["TemporalSwiftCore", "TemporalSwiftStorage", "TemporalSwiftQuery"],
+            swiftSettings: [
+                .swiftLanguageMode(.v6)
+            ]
+        ),
+        .testTarget(
+            name: "TemporalSwiftPersistenceTests",
+            dependencies: ["TemporalSwiftCore", "TemporalSwiftStorage", "TemporalSwiftPersistence"],
             swiftSettings: [
                 .swiftLanguageMode(.v6)
             ]
