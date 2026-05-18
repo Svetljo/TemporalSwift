@@ -172,6 +172,6 @@ All errors are `TemporalSwiftError` cases. Never `fatalError` or `preconditionFa
 <!-- SPECKIT START -->
 ## Active Feature Plan
 
-**Feature**: SwiftData Persistent Store
-**Plan**: `specs/001-swiftdata-persistent-store/plan.md`
+**Feature**: SQLite Persistent Graph Store
+**Plan**: `specs/002-sqlite-graph-store/plan.md`
 <!-- SPECKIT END -->

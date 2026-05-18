@@ -24,7 +24,8 @@ Alice lives in Milan     (valid Jun 2025–present)
 - **Cycle constraint enforcement** — per-edge-type acyclicity constraints with DFS cycle detection. Hierarchical relationship types (e.g. `"parent_of"`) can be declared DAG-only; general types (e.g. `"knows"`) allow cycles.
 - **LLM context packaging** — extract a relevance-ranked subgraph centred on a focal entity and serialize it to JSON within a character budget, with ≤5% overshoot tolerance.
 - **Swift 6 strict concurrency** — `InMemoryGraphStore` is an `actor`; all data models are `Sendable` value types. No data races under concurrent agent workloads.
-- **Zero third-party dependencies** — Foundation only.
+- **Persistent storage** — `SQLiteGraphStore` (in `TemporalSwiftSQLite`) provides a cross-platform, file-backed store that survives process restarts. Drop-in replacement for `InMemoryGraphStore`.
+- **Zero third-party dependencies** — Foundation and system SQLite only.
 
 ## Package Structure
 
@@ -32,12 +33,16 @@ Alice lives in Milan     (valid Jun 2025–present)
 Sources/
 ├── TemporalSwiftCore/       # Data models, protocols, errors
 ├── TemporalSwiftStorage/    # InMemoryGraphStore actor
-└── TemporalSwiftQuery/      # TemporalQueryEngine, GraphTraverser, ContextPackager
+├── TemporalSwiftQuery/      # TemporalQueryEngine, GraphTraverser, ContextPackager
+├── TemporalSwiftPersistence/# SwiftDataGraphStore (Apple platforms only)
+└── TemporalSwiftSQLite/     # SQLiteGraphStore (cross-platform)
 
 Tests/
 ├── TemporalSwiftCoreTests/
 ├── TemporalSwiftStorageTests/
-└── TemporalSwiftQueryTests/
+├── TemporalSwiftQueryTests/
+├── TemporalSwiftPersistenceTests/
+└── TemporalSwiftSQLiteTests/
 ```
 
 | Target | Role |
@@ -45,6 +50,8 @@ Tests/
 | `TemporalSwiftCore` | `Node`, `Edge`, `TemporalState`, `Episode`, `ContextSnapshot`, `AttributeValue`, `TemporalBounds`, protocol definitions, `TemporalSwiftError` |
 | `TemporalSwiftStorage` | `InMemoryGraphStore` — thread-safe in-memory backend |
 | `TemporalSwiftQuery` | `TemporalQueryEngine`, `GraphTraverser`, `ContextPackager` |
+| `TemporalSwiftPersistence` | `SwiftDataGraphStore` — persistent store using SwiftData (macOS 14+, iOS 17+) |
+| `TemporalSwiftSQLite` | `SQLiteGraphStore` — persistent store using raw SQLite (macOS + Linux) |
 
 ## Requirements
 
@@ -74,7 +81,44 @@ Then add the targets you need:
 )
 ```
 
+To use persistent storage, add the appropriate target instead of (or in addition to) `TemporalSwiftStorage`:
+
+```swift
+// Cross-platform SQLite store (macOS + Linux)
+.product(name: "TemporalSwiftSQLite", package: "TemporalSwift")
+
+// SwiftData store (Apple platforms only: macOS 14+, iOS 17+)
+.product(name: "TemporalSwiftPersistence", package: "TemporalSwift")
+```
+
 ## Usage
+
+### Choose a storage backend
+
+TemporalSwift ships three `GraphStore` implementations. All expose the same protocol — swap between them by changing a single line at initialization.
+
+| Store | Module | Persistence | Platforms |
+|-------|--------|-------------|-----------|
+| `InMemoryGraphStore` | `TemporalSwiftStorage` | None (process lifetime) | All |
+| `SQLiteGraphStore` | `TemporalSwiftSQLite` | File-backed SQLite | macOS + Linux |
+| `SwiftDataGraphStore` | `TemporalSwiftPersistence` | File-backed SwiftData | macOS 14+, iOS 17+ |
+
+```swift
+import TemporalSwiftStorage
+let store = InMemoryGraphStore()              // development / testing
+
+import TemporalSwiftSQLite
+let store = try SQLiteGraphStore(            // production (cross-platform)
+    path: "/path/to/graph.db"
+)
+
+import TemporalSwiftPersistence
+let store = try SwiftDataGraphStore(         // production (Apple-only)
+    url: URL(fileURLWithPath: "/path/to/graph.sqlite")
+)
+```
+
+The `SQLiteGraphStore` also accepts `":memory:"` as a path for a fast, isolated in-memory database — useful in tests that need the full persistence code path without touching disk.
 
 ### Store your first facts
 
@@ -251,7 +295,7 @@ All errors are cases of `TemporalSwiftError`:
 swift test
 ```
 
-All 73 tests cover temporal edge cases, Codable round-trips, referential integrity, concurrency correctness (10 concurrent agents, zero corruption), cycle detection, BFS traversal, and context packaging budget enforcement.
+All 129 tests cover temporal edge cases, Codable round-trips, referential integrity, concurrency correctness (10 concurrent agents, zero corruption), cycle detection, BFS traversal, context packaging budget enforcement, SQLite persistence round-trips across process restarts, and version counter monotonicity.
 
 ## License
 

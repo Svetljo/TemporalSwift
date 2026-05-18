@@ -14,8 +14,20 @@ let package = Package(
         .library(name: "TemporalSwiftStorage", targets: ["TemporalSwiftStorage"]),
         .library(name: "TemporalSwiftQuery", targets: ["TemporalSwiftQuery"]),
         .library(name: "TemporalSwiftPersistence", targets: ["TemporalSwiftPersistence"]),
+        .library(name: "TemporalSwiftSQLite", targets: ["TemporalSwiftSQLite"]),
     ],
     targets: [
+        // MARK: - System library wrapper for SQLite3
+        .systemLibrary(
+            name: "CSQLite",
+            pkgConfig: "sqlite3",
+            providers: [
+                .apt(["libsqlite3-dev"]),
+                .brew(["sqlite"]),
+            ]
+        ),
+
+        // MARK: - Core library targets
         .target(
             name: "TemporalSwiftCore",
             dependencies: [],
@@ -44,6 +56,15 @@ let package = Package(
                 .swiftLanguageMode(.v6)
             ]
         ),
+        .target(
+            name: "TemporalSwiftSQLite",
+            dependencies: ["TemporalSwiftCore", "CSQLite"],
+            swiftSettings: [
+                .swiftLanguageMode(.v6)
+            ]
+        ),
+
+        // MARK: - Test targets
         .testTarget(
             name: "TemporalSwiftCoreTests",
             dependencies: ["TemporalSwiftCore"],
@@ -68,6 +89,13 @@ let package = Package(
         .testTarget(
             name: "TemporalSwiftPersistenceTests",
             dependencies: ["TemporalSwiftCore", "TemporalSwiftStorage", "TemporalSwiftPersistence"],
+            swiftSettings: [
+                .swiftLanguageMode(.v6)
+            ]
+        ),
+        .testTarget(
+            name: "TemporalSwiftSQLiteTests",
+            dependencies: ["TemporalSwiftCore", "TemporalSwiftStorage", "TemporalSwiftSQLite"],
             swiftSettings: [
                 .swiftLanguageMode(.v6)
             ]
